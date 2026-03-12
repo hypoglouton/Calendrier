@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mon calendrier A4</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <button id="prevMonth" class="nav-btn">← Précédent</button>
+    <div class="title-wrap">
+      <div class="subtitle">Calendrier mensuel A4</div>
+      <h1 id="currentTitle">Mois</h1>
+    </div>
+    <button id="nextMonth" class="nav-btn">Suivant →</button>
+  </header>
+
+  <main id="calendarScroller" class="calendar-scroller"></main>
+
+  <template id="monthTemplate">
+    <section class="month-page">
+      <div class="a4-sheet">
+        <div class="sheet-header">
+          <div>
+            <div class="sheet-kicker">Vue mensuelle</div>
+            <h2 class="month-title"></h2>
+          </div>
+          <div class="sheet-note">Défilement vertical • A4</div>
+        </div>
+
+        <div class="weekday-row"></div>
+        <div class="days-grid"></div>
+      </div>
+    </section>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
