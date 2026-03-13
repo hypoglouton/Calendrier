@@ -1,4 +1,9 @@
-CALENDRIER V3 FIX NAVIGATION - GITHUB + VERCEL
+CALENDRIER V3 FULLSCREEN F - GITHUB + VERCEL
+
+Ajout
+- appuyer sur la touche F active le plein écran
+- appuyer de nouveau sur F quitte le plein écran
+- bouton plein écran ajouté en bas à droite
 
 Contenu
 - navigation intégrée dans le header du calendrier

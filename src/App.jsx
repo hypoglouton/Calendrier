@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Trash2, Save, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2, Save, X, Maximize2, Minimize2 } from "lucide-react";
 
 const STORAGE_KEY = "calendar-a4-v3-state";
 
@@ -91,6 +91,18 @@ function chipStyle(tag) {
     color: tag.text,
     border: `2px solid ${tag.border}`
   };
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch (e) {
+    console.error("Fullscreen non disponible", e);
+  }
 }
 
 function PresetChip({ preset }) {
@@ -204,6 +216,7 @@ function MonthPage({
   onOpenItem,
   onPrevMonth,
   onNextMonth,
+  isFullscreen,
 }) {
   const cells = getMonthMatrix(year, monthIndex);
   const today = new Date();
@@ -214,7 +227,7 @@ function MonthPage({
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.22 }}
-        className="sheet"
+        className={`sheet ${isFullscreen ? "sheet-fullscreen" : ""}`}
       >
         <header className="sheet-header">
           <div className="sheet-nav-shell">
@@ -305,14 +318,35 @@ export default function App() {
   const scrollRef = useRef(null);
   const [itemsByDay, setItemsByDay] = useState({});
   const [editing, setEditing] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     setItemsByDay(loadSavedState());
+    setIsFullscreen(!!document.fullscreenElement);
   }, []);
 
   useEffect(() => {
     saveState(itemsByDay);
   }, [itemsByDay]);
+
+  useEffect(() => {
+    const onFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    const onKeyDown = (e) => {
+      const tag = document.activeElement?.tagName;
+      const isTyping = tag === "INPUT" || tag === "TEXTAREA";
+      if (!isTyping && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
 
   const scrollToIndex = (index) => {
     const el = scrollRef.current;
@@ -357,7 +391,7 @@ export default function App() {
   };
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${isFullscreen ? "app-fullscreen" : ""}`}>
       <div className="sidebar desktop-only">
         <div className="sidebar-head">
           <div className="sidebar-title">Vignettes</div>
@@ -369,6 +403,15 @@ export default function App() {
           ))}
         </div>
       </div>
+
+      <button
+        className="fullscreen-btn"
+        onClick={toggleFullscreen}
+        title="Basculer en plein écran avec F"
+      >
+        {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+        <span>{isFullscreen ? "Quitter plein écran" : "Plein écran (F)"}</span>
+      </button>
 
       <div className="mobile-preset-bar mobile-only">
         <div className="mobile-preset-title">Vignettes</div>
@@ -391,6 +434,7 @@ export default function App() {
             onOpenItem={handleOpenItem}
             onPrevMonth={(pageIndex) => scrollToIndex(pageIndex - 1)}
             onNextMonth={(pageIndex) => scrollToIndex(pageIndex + 1)}
+            isFullscreen={isFullscreen}
           />
         ))}
       </div>
@@ -479,6 +523,23 @@ export default function App() {
           opacity: .8;
           font-weight: 700;
         }
+        .fullscreen-btn {
+          position: fixed;
+          right: 14px;
+          bottom: 14px;
+          z-index: 55;
+          border: 2px solid #000;
+          border-radius: 14px;
+          padding: 10px 14px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: #ffffff;
+          color: #000;
+          font-weight: 900;
+          cursor: pointer;
+          box-shadow: 0 12px 24px rgba(0,0,0,.28);
+        }
         .scroll-area {
           height: 100vh;
           overflow-y: auto;
@@ -509,6 +570,10 @@ export default function App() {
           box-shadow: 0 24px 56px rgba(0,0,0,.35);
           display: flex;
           flex-direction: column;
+          transition: max-width .18s ease;
+        }
+        .sheet-fullscreen {
+          max-width: calc(100vw - 40px);
         }
         .sheet-header {
           flex-shrink: 0;
@@ -792,6 +857,11 @@ export default function App() {
           .page-wrap {
             padding: 18px 12px 12px;
           }
+          .fullscreen-btn {
+            right: 12px;
+            bottom: 12px;
+            padding: 10px 12px;
+          }
         }
 
         @media (max-width: 900px) {
@@ -835,6 +905,9 @@ export default function App() {
           }
           .sheet-title {
             font-size: clamp(24px, 4vw, 34px);
+          }
+          .fullscreen-btn span {
+            display: none;
           }
         }
       `}</style>
