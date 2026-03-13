@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, CalendarDays, Trash2, Save, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2, Save, X } from "lucide-react";
 
 const STORAGE_KEY = "calendar-a4-v3-state";
 
@@ -195,7 +195,16 @@ function EditModal({ open, item, onClose, onSave, onDelete }) {
   );
 }
 
-function MonthPage({ year, monthIndex, itemsByDay, onDropPreset, onOpenItem }) {
+function MonthPage({
+  year,
+  monthIndex,
+  pageIndex,
+  itemsByDay,
+  onDropPreset,
+  onOpenItem,
+  onPrevMonth,
+  onNextMonth,
+}) {
   const cells = getMonthMatrix(year, monthIndex);
   const today = new Date();
 
@@ -207,16 +216,32 @@ function MonthPage({ year, monthIndex, itemsByDay, onDropPreset, onOpenItem }) {
         transition={{ duration: 0.22 }}
         className="sheet"
       >
-        <div className="sheet-header">
-          <div>
-            <div className="sheet-kicker">Calendrier mensuel</div>
-            <h1 className="sheet-title">{MONTHS_FR[monthIndex]} {year}</h1>
+        <header className="sheet-header">
+          <div className="sheet-nav-shell">
+            <div className="sheet-nav-row">
+              <button
+                onClick={() => onPrevMonth(pageIndex)}
+                className="nav-btn prev-btn"
+              >
+                <ChevronLeft size={16} />
+                <span>Précédent</span>
+              </button>
+
+              <div className="sheet-nav-center">
+                <div className="indicator-label">Navigation</div>
+                <h1 className="sheet-title">{MONTHS_FR[monthIndex]} {year}</h1>
+              </div>
+
+              <button
+                onClick={() => onNextMonth(pageIndex)}
+                className="nav-btn next-btn"
+              >
+                <span>Suivant</span>
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
-          <div className="sheet-badge">
-            <CalendarDays size={16} />
-            <span>Format A4 • contraste renforcé</span>
-          </div>
-        </div>
+        </header>
 
         <div className="weekday-row">
           {DAYS_FR.map((day) => (
@@ -278,7 +303,6 @@ function MonthPage({ year, monthIndex, itemsByDay, onDropPreset, onOpenItem }) {
 export default function App() {
   const months = useMemo(() => buildMonths(18), []);
   const scrollRef = useRef(null);
-  const [activeIndex, setActiveIndex] = useState(0);
   const [itemsByDay, setItemsByDay] = useState({});
   const [editing, setEditing] = useState(null);
 
@@ -290,25 +314,11 @@ export default function App() {
     saveState(itemsByDay);
   }, [itemsByDay]);
 
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const onScroll = () => {
-      const page = Math.round(el.scrollTop / el.clientHeight);
-      setActiveIndex(Math.max(0, Math.min(months.length - 1, page)));
-    };
-
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [months.length]);
-
   const scrollToIndex = (index) => {
     const el = scrollRef.current;
     if (!el) return;
     const safeIndex = Math.max(0, Math.min(months.length - 1, index));
     el.scrollTo({ top: safeIndex * el.clientHeight, behavior: "smooth" });
-    setActiveIndex(safeIndex);
   };
 
   const handleDropPreset = (dateKey, presetId) => {
@@ -360,25 +370,6 @@ export default function App() {
         </div>
       </div>
 
-      <div className="topbar">
-        <button onClick={() => scrollToIndex(activeIndex - 1)} className="nav-btn prev-btn">
-          <ChevronLeft size={16} />
-          <span>Précédent</span>
-        </button>
-
-        <div className="month-indicator">
-          <div className="indicator-label">Navigation</div>
-          <div className="indicator-value">
-            {MONTHS_FR[months[activeIndex].monthIndex]} {months[activeIndex].year}
-          </div>
-        </div>
-
-        <button onClick={() => scrollToIndex(activeIndex + 1)} className="nav-btn next-btn">
-          <span>Suivant</span>
-          <ChevronRight size={16} />
-        </button>
-      </div>
-
       <div className="mobile-preset-bar mobile-only">
         <div className="mobile-preset-title">Vignettes</div>
         <div className="mobile-preset-grid">
@@ -389,14 +380,17 @@ export default function App() {
       </div>
 
       <div ref={scrollRef} className="scroll-area">
-        {months.map((month) => (
+        {months.map((month, index) => (
           <MonthPage
             key={month.key}
             year={month.year}
             monthIndex={month.monthIndex}
+            pageIndex={index}
             itemsByDay={itemsByDay}
             onDropPreset={handleDropPreset}
             onOpenItem={handleOpenItem}
+            onPrevMonth={(pageIndex) => scrollToIndex(pageIndex - 1)}
+            onNextMonth={(pageIndex) => scrollToIndex(pageIndex + 1)}
           />
         ))}
       </div>
@@ -485,57 +479,6 @@ export default function App() {
           opacity: .8;
           font-weight: 700;
         }
-        .topbar {
-          position: fixed;
-          top: 12px;
-          left: 50%;
-          transform: translateX(-50%);
-          z-index: 30;
-          width: min(96vw, 980px);
-          background: #ffffff;
-          border: 2px solid #000;
-          border-radius: 18px;
-          padding: 12px;
-          box-shadow: 0 12px 28px rgba(0,0,0,.28);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-        }
-        .nav-btn {
-          border: 2px solid #000;
-          border-radius: 12px;
-          padding: 10px 14px;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 14px;
-          font-weight: 900;
-          cursor: pointer;
-        }
-        .prev-btn { background: #fde047; color: #000; }
-        .next-btn { background: #bef264; color: #000; }
-        .month-indicator {
-          min-width: 0;
-          padding: 0 8px;
-          text-align: center;
-        }
-        .indicator-label {
-          font-size: 11px;
-          text-transform: uppercase;
-          letter-spacing: .18em;
-          color: #555;
-          font-weight: 700;
-        }
-        .indicator-value {
-          margin-top: 4px;
-          font-size: 18px;
-          font-weight: 900;
-          color: #000;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
         .scroll-area {
           height: 100vh;
           overflow-y: auto;
@@ -571,37 +514,58 @@ export default function App() {
           flex-shrink: 0;
           background: #67e8f9;
           border-bottom: 2px solid #000;
-          padding: 18px 24px;
+          padding: 14px 18px;
+        }
+        .sheet-nav-shell {
+          border: 2px solid #000;
+          border-radius: 22px;
+          background: #ffffff;
+          padding: 12px 14px;
+          box-shadow: 0 10px 22px rgba(0,0,0,.16);
+        }
+        .sheet-nav-row {
           display: flex;
-          justify-content: space-between;
           align-items: center;
+          justify-content: space-between;
           gap: 12px;
         }
-        .sheet-kicker {
-          font-size: 12px;
-          font-weight: 800;
+        .nav-btn {
+          border: 2px solid #000;
+          border-radius: 12px;
+          padding: 10px 14px;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 14px;
+          font-weight: 900;
+          cursor: pointer;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+        .prev-btn { background: #fde047; color: #000; }
+        .next-btn { background: #bef264; color: #000; }
+        .sheet-nav-center {
+          min-width: 0;
+          flex: 1;
+          text-align: center;
+          padding: 0 8px;
+        }
+        .indicator-label {
+          font-size: 11px;
           text-transform: uppercase;
           letter-spacing: .18em;
-          color: rgba(0,0,0,.8);
+          color: #555;
+          font-weight: 800;
         }
         .sheet-title {
           margin: 6px 0 0;
-          font-size: clamp(28px, 4vw, 54px);
+          font-size: clamp(28px, 4vw, 50px);
           line-height: 1.05;
           font-weight: 900;
           color: #000;
-        }
-        .sheet-badge {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          border: 2px solid #000;
-          background: #fff;
-          border-radius: 18px;
-          padding: 12px 16px;
-          font-size: 14px;
-          font-weight: 800;
-          color: #000;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         .weekday-row {
           display: grid;
@@ -794,7 +758,7 @@ export default function App() {
           position: fixed;
           left: 12px;
           right: 12px;
-          top: 82px;
+          top: 12px;
           z-index: 30;
           border: 2px solid #000;
           border-radius: 18px;
@@ -821,15 +785,9 @@ export default function App() {
         @media (max-width: 1279px) {
           .desktop-only { display: none; }
           .mobile-only { display: block; }
-          .topbar {
-            width: calc(100vw - 24px);
-            left: 12px;
-            right: 12px;
-            transform: none;
-          }
           .scroll-area {
             padding-left: 0;
-            padding-top: 150px;
+            padding-top: 98px;
           }
           .page-wrap {
             padding: 18px 12px 12px;
@@ -839,13 +797,17 @@ export default function App() {
         @media (max-width: 900px) {
           .sheet {
             aspect-ratio: auto;
-            min-height: calc(100vh - 180px);
+            min-height: calc(100vh - 140px);
           }
           .sheet-header {
-            padding: 14px 14px;
+            padding: 10px;
           }
-          .sheet-badge {
-            display: none;
+          .sheet-nav-shell {
+            padding: 10px;
+            border-radius: 18px;
+          }
+          .sheet-nav-row {
+            gap: 8px;
           }
           .weekday-row, .days-grid {
             gap: 6px;
@@ -867,16 +829,12 @@ export default function App() {
           .sticker-line, .preset-title {
             font-size: 11px;
           }
-          .topbar {
-            gap: 8px;
-            padding: 10px;
-          }
           .nav-btn {
             padding: 8px 10px;
             font-size: 12px;
           }
-          .indicator-value {
-            font-size: 14px;
+          .sheet-title {
+            font-size: clamp(24px, 4vw, 34px);
           }
         }
       `}</style>
