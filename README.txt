@@ -1,15 +1,24 @@
-CALENDRIER V3 HEURE AU DEPOT - GITHUB + VERCEL
+CALENDRIER MULTI-ONGLETS
 
-Ajout
-- quand une vignette est déposée sur une date, une petite fenêtre s'ouvre
-- cette fenêtre demande les heures et les minutes
-- après validation, l'heure s'affiche sur la vignette à côté du nom de l'activité
-- le style de la fenêtre est harmonisé avec la charte du calendrier
+Contenu :
+- index.html
+- styles.css
+- app.js
 
-Toujours inclus
-- touche F pour plein écran / quitter plein écran
-- navigation intégrée dans le header
-- bibliothèque de vignettes à glisser-déposer
-- clic sur une vignette pour modifier heure, titre, note
-- suppression d'une vignette
-- sauvegarde automatique en local dans le navigateur
+Fonctions principales :
+- création d'un onglet par personne
+- vue finale consolidée "Tous les RDV"
+- calendrier mensuel individuel
+- ajout / modification / suppression de rendez-vous
+- recherche dans le mois affiché
+- sauvegarde locale automatique dans le navigateur (localStorage)
+
+Utilisation :
+1. Ouvrir index.html dans un navigateur.
+2. Cliquer sur "+ Nouvel onglet" pour créer une personne.
+3. Aller sur l'onglet de la personne.
+4. Cliquer sur "+" dans une journée pour ajouter un rendez-vous.
+5. Aller sur "Vue finale - Tous les RDV" pour voir la consolidation.
+
+Note :
+Les données sont enregistrées dans le navigateur utilisé sur l'ordinateur.
